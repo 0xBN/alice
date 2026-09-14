@@ -23,6 +23,6 @@ Open `http://localhost:8080`. File:// will fail GIS / fetch.
 | Constant | Where | Notes |
 |----------|--------|--------|
 | `CLIENT_ID` | `app.js` | Workout Web OAuth client (public) |
-| `FILE_ID` | `app.js` | Drive file id for `alice-sample.json` (then live `alice.json`) |
+| `FILE_ID` | `app.js` | Drive file id for live `alice.json` (sample kept as `alice-sample.json`) |
 
 No Alice data and no OAuth secrets in this repo.
