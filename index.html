@@ -5,12 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alice list</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem("alice_theme");
+          var dark =
+            s === "dark" ||
+            (s !== "light" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute(
+            "data-theme",
+            dark ? "dark" : "light",
+          );
+        } catch (_) {}
+      })();
+    </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <main class="shell">
       <header class="top">
-        <h1>Alice list</h1>
+        <div class="title-row">
+          <h1>Alice list</h1>
+          <button type="button" class="theme-btn" id="theme-toggle" aria-label="Toggle dark mode">
+            Dark
+          </button>
+        </div>
         <div class="top-row" id="meta-row" hidden>
           <p class="sub" id="last-sync"></p>
           <label class="hide-toggle">

@@ -20,8 +20,31 @@ const BAND_COLLAPSED_DEFAULT = {
 
 const LS_HIDE = "alice_hide_details";
 const LS_COLLAPSE = "alice_band_collapsed";
+const LS_THEME = "alice_theme"; // "light" | "dark" | null (= system)
 
 const $ = (id) => document.getElementById(id);
+
+function systemPrefersDark() {
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+}
+
+function resolveTheme() {
+  const saved = localStorage.getItem(LS_THEME);
+  if (saved === "light" || saved === "dark") return saved;
+  return systemPrefersDark() ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = $("theme-toggle");
+  if (btn) btn.textContent = theme === "dark" ? "Light" : "Dark";
+}
+
+function toggleTheme() {
+  const next = resolveTheme() === "dark" ? "light" : "dark";
+  localStorage.setItem(LS_THEME, next);
+  applyTheme(next);
+}
 
 let state = {
   data: null,
@@ -170,6 +193,14 @@ function render() {
 }
 
 function wireChrome() {
+  applyTheme(resolveTheme());
+  $("theme-toggle").addEventListener("click", toggleTheme);
+  window
+    .matchMedia?.("(prefers-color-scheme: dark)")
+    ?.addEventListener("change", () => {
+      if (!localStorage.getItem(LS_THEME)) applyTheme(resolveTheme());
+    });
+
   $("hide-done").addEventListener("change", (e) => {
     state.hideDetails = !!e.target.checked;
     localStorage.setItem(LS_HIDE, state.hideDetails ? "1" : "0");

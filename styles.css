@@ -1,13 +1,42 @@
 :root {
   color-scheme: light;
   --bg: #f3efe7;
+  --bg-glow: #e8dcc8;
+  --bg-top: #efe8db;
+  --bg-bottom: #e7e1d6;
   --ink: #1a1a1a;
   --muted: #5c5c5c;
   --line: #d8d0c4;
   --band: #2f4a3a;
   --card: #fffdf8;
   --done: #6b6b6b;
+  --btn-bg: #1a1a1a;
+  --btn-ink: #f7f2ea;
+  --btn-hover: #333;
+  --err-border: #c45c26;
+  --err-ink: #7a2e0e;
+  --accent-check: #1a1a1a;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141210;
+  --bg-glow: #2a2218;
+  --bg-top: #1a1714;
+  --bg-bottom: #0f0e0c;
+  --ink: #ece6dc;
+  --muted: #a39889;
+  --line: #3a342c;
+  --band: #9bb8a4;
+  --card: #1e1b17;
+  --done: #8a8278;
+  --btn-bg: #ece6dc;
+  --btn-ink: #141210;
+  --btn-hover: #d4cdc2;
+  --err-border: #d97757;
+  --err-ink: #f0b5a0;
+  --accent-check: #ece6dc;
 }
 
 * {
@@ -18,8 +47,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 10% -10%, #e8dcc8 0%, transparent 55%),
-    linear-gradient(180deg, #efe8db 0%, var(--bg) 40%, #e7e1d6 100%);
+    radial-gradient(1200px 600px at 10% -10%, var(--bg-glow) 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 40%, var(--bg-bottom) 100%);
   color: var(--ink);
 }
 
@@ -35,11 +64,34 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 h1 {
   margin: 0;
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
   font-size: clamp(1.85rem, 5.5vw, 2.5rem);
   letter-spacing: -0.02em;
+}
+
+.theme-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.theme-btn:hover {
+  color: var(--ink);
+  border-color: var(--muted);
 }
 
 .top-row {
@@ -69,22 +121,22 @@ h1 {
 .hide-toggle input {
   width: 1.05rem;
   height: 1.05rem;
-  accent-color: #1a1a1a;
+  accent-color: var(--accent-check);
 }
 
 button#login {
   justify-self: start;
   margin-top: 0.25rem;
-  border: 1px solid #1a1a1a;
-  background: #1a1a1a;
-  color: #f7f2ea;
+  border: 1px solid var(--btn-bg);
+  background: var(--btn-bg);
+  color: var(--btn-ink);
   padding: 0.55rem 0.9rem;
   font: inherit;
   cursor: pointer;
 }
 
 button#login:hover {
-  background: #333;
+  background: var(--btn-hover);
 }
 
 .band-block {
@@ -180,6 +232,6 @@ button#login:hover {
 }
 
 .err {
-  border-color: #c45c26;
-  color: #7a2e0e;
+  border-color: var(--err-border);
+  color: var(--err-ink);
 }
