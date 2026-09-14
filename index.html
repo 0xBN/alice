@@ -3,14 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Alice</title>
+    <title>Alice list</title>
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <main class="shell">
       <header class="top">
-        <h1>Alice</h1>
+        <h1>Alice list</h1>
+        <div class="top-row" id="meta-row" hidden>
+          <p class="sub" id="last-sync"></p>
+          <label class="hide-toggle">
+            <span id="hide-label">Hide details</span>
+            <input type="checkbox" id="hide-done" />
+          </label>
+        </div>
         <p class="sub" id="status">Sign in to load your list.</p>
         <button type="button" id="login" hidden>Sign in with Google</button>
       </header>

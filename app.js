@@ -6,9 +6,51 @@ const CLIENT_ID =
 const FILE_ID = "1IWrrE6N3Iefj2Q-EOJQdEtQEa3cIbjpa";
 
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
-const BAND_ORDER = ["Now", "Today", "Awaiting others", "Soon", "Later"];
+
+/** Open-work order — matches stand-act Canvas. */
+const BANDS = ["Now", "Today", "Awaiting others", "Soon"];
+
+const BAND_COLLAPSED_DEFAULT = {
+  Now: false,
+  Today: false,
+  "Awaiting others": true,
+  Soon: true,
+  Done: true,
+};
+
+const LS_HIDE = "alice_hide_details";
+const LS_COLLAPSE = "alice_band_collapsed";
 
 const $ = (id) => document.getElementById(id);
+
+let state = {
+  data: null,
+  hideDetails: localStorage.getItem(LS_HIDE) === "1",
+  bandCollapsed: loadCollapse(),
+};
+
+function loadCollapse() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_COLLAPSE) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveCollapse() {
+  localStorage.setItem(LS_COLLAPSE, JSON.stringify(state.bandCollapsed));
+}
+
+function collapsedFor(band) {
+  const v = state.bandCollapsed[band];
+  return typeof v === "boolean" ? v : BAND_COLLAPSED_DEFAULT[band];
+}
+
+function toggleBand(band) {
+  state.bandCollapsed[band] = !collapsedFor(band);
+  saveCollapse();
+  render();
+}
 
 function waitForGoogle() {
   if (window.google?.accounts?.oauth2) return Promise.resolve();
@@ -26,56 +68,113 @@ function setStatus(text) {
   $("status").textContent = text;
 }
 
-function render(data) {
-  const root = $("list");
-  root.innerHTML = "";
-  const items = (data.items || []).filter((i) => i.status === "open");
-  if (!items.length) {
-    root.innerHTML = `<p class="empty">No open items.</p>`;
-    return;
-  }
-
-  const byBand = new Map();
-  for (const item of items) {
-    const band = item.band || "Later";
-    if (!byBand.has(band)) byBand.set(band, []);
-    byBand.get(band).push(item);
-  }
-
-  const bands = [
-    ...BAND_ORDER.filter((b) => byBand.has(b)),
-    ...[...byBand.keys()].filter((b) => !BAND_ORDER.includes(b)),
-  ];
-
-  for (const band of bands) {
-    const h = document.createElement("h2");
-    h.className = "band";
-    h.textContent = band;
-    root.appendChild(h);
-    for (const item of byBand.get(band)) {
-      const el = document.createElement("article");
-      el.className = "item";
-      const due = item.due ? `<div class="meta">${escapeHtml(item.due)}</div>` : "";
-      const note = item.note
-        ? `<div class="note">${escapeHtml(item.note)}</div>`
-        : "";
-      el.innerHTML = `<div class="title">${escapeHtml(item.title || item.id)}</div>${due}${note}`;
-      root.appendChild(el);
-    }
-  }
-
-  const when = data.updatedAt
-    ? new Date(data.updatedAt).toLocaleString()
-    : "unknown";
-  setStatus(`Loaded · ${data.source || "drive"} · ${when}`);
-}
-
 function escapeHtml(s) {
   return String(s)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function markFor(status) {
+  if (status === "done") return "[x]";
+  if (status === "skip") return "[~]";
+  return "[ ]";
+}
+
+function itemEl(item) {
+  const el = document.createElement("article");
+  el.className = `item ${item.status || "open"}`;
+  const due = item.due ? `<div class="meta">${escapeHtml(item.due)}</div>` : "";
+  const note = item.note
+    ? `<div class="note">${escapeHtml(item.note)}</div>`
+    : "";
+  const skipPill =
+    item.status === "skip" ? `<span class="pill">skip</span>` : "";
+  el.innerHTML = `<div class="row-main"><span class="mark">${markFor(item.status)}</span><div><div class="title">${escapeHtml(item.title || item.id)}${skipPill}</div>${due}${note}</div></div>`;
+  return el;
+}
+
+function bandBlock(label, count, items, key) {
+  if (!count) return null;
+  const collapsed = collapsedFor(key);
+  const wrap = document.createElement("section");
+  wrap.className = "band-block";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "band-toggle";
+  btn.textContent = `${collapsed ? "▸" : "▾"} ${label} · ${count}`;
+  btn.addEventListener("click", () => toggleBand(key));
+  wrap.appendChild(btn);
+  if (!collapsed) {
+    for (const item of items) wrap.appendChild(itemEl(item));
+  }
+  return wrap;
+}
+
+function render() {
+  const data = state.data;
+  if (!data) return;
+
+  const items = data.items || [];
+  const root = $("list");
+  root.innerHTML = "";
+
+  const doneItems = items.filter(
+    (i) => i.status === "done" || i.status === "skip",
+  );
+  const hiddenCount = items.filter((i) => i.status === "done").length;
+
+  $("meta-row").hidden = false;
+  $("last-sync").textContent = `Last sync: ${
+    data.lastSync || data.updatedAt || "unknown — ask Alice to sync"
+  }`;
+
+  const hideLabel = $("hide-label");
+  let hideText = "Hide details";
+  if (state.hideDetails && hiddenCount > 0) hideText += ` · ${hiddenCount}`;
+  hideLabel.textContent = hideText;
+
+  const hideInput = $("hide-done");
+  hideInput.checked = state.hideDetails;
+
+  let any = false;
+  for (const band of BANDS) {
+    const bandItems = items.filter(
+      (i) => i.band === band && i.status === "open",
+    );
+    const block = bandBlock(band, bandItems.length, bandItems, band);
+    if (block) {
+      root.appendChild(block);
+      any = true;
+    }
+  }
+
+  if (!state.hideDetails && doneItems.length) {
+    const block = bandBlock("Done", doneItems.length, doneItems, "Done");
+    if (block) {
+      root.appendChild(block);
+      any = true;
+    }
+  }
+
+  if (!any) {
+    root.innerHTML = `<p class="empty">No open items.</p>`;
+  }
+
+  const openN = items.filter((i) => i.status === "open").length;
+  const bits = [`${openN} open`];
+  if (doneItems.length && !state.hideDetails) bits.push(`${doneItems.length} done`);
+  if (data.context) bits.push(data.context);
+  setStatus(bits.join(" · "));
+}
+
+function wireChrome() {
+  $("hide-done").addEventListener("change", (e) => {
+    state.hideDetails = !!e.target.checked;
+    localStorage.setItem(LS_HIDE, state.hideDetails ? "1" : "0");
+    render();
+  });
 }
 
 async function fetchAliceJson(token) {
@@ -94,12 +193,13 @@ async function loadWithToken(token) {
   setStatus("Loading Alice…");
   $("login").hidden = true;
   try {
-    const data = await fetchAliceJson(token);
-    render(data);
+    state.data = await fetchAliceJson(token);
+    render();
   } catch (err) {
     console.error(err);
     $("list").innerHTML = `<p class="err">${escapeHtml(err.message)}</p>`;
     $("login").hidden = false;
+    $("meta-row").hidden = true;
     setStatus("Could not load Drive file. Sign in again?");
   }
 }
@@ -128,6 +228,7 @@ function requestToken(prompt) {
 }
 
 async function boot() {
+  wireChrome();
   const login = $("login");
   login.hidden = false;
   login.addEventListener("click", async () => {
@@ -147,7 +248,6 @@ async function boot() {
     return;
   }
 
-  // Silent refresh attempt (may fail until first explicit consent for Drive).
   const silent = await requestToken(false);
   if (silent) await loadWithToken(silent);
 }
