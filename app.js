@@ -7,7 +7,7 @@ const FILE_ID = "1IWrrE6N3Iefj2Q-EOJQdEtQEa3cIbjpa";
 
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 
-/** Open-work order — matches stand-act Canvas. */
+/** Open-work order — matches Alice Canvas bands. */
 const BANDS = ["Now", "Today", "Awaiting others", "Soon"];
 
 const BAND_COLLAPSED_DEFAULT = {
