@@ -15,7 +15,7 @@ const BAND_COLLAPSED_DEFAULT = {
   Today: false,
   "Awaiting others": true,
   Soon: true,
-  Done: true,
+  Done: false,
 };
 
 const LS_HIDE = "alice_hide_details";
@@ -65,6 +65,8 @@ function saveCollapse() {
 }
 
 function collapsedFor(band) {
+  // Hide details hides done rows; when off, Done stays expanded for undo.
+  if (band === "Done" && !state.hideDetails) return false;
   const v = state.bandCollapsed[band];
   return typeof v === "boolean" ? v : BAND_COLLAPSED_DEFAULT[band];
 }
